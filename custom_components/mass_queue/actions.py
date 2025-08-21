@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.core import (
@@ -125,12 +125,25 @@ class MassQueueActions:
     async def get_queue_index(self, entity_id: str):
         """Get the current index of the queue."""
         active_queue = await self.get_active_queue(entity_id)
+        if active_queue is None or active_queue.current_index is None:
+            return 0
         return active_queue.current_index
 
     async def get_active_queue(self, entity_id: str):
         """Get active queue details."""
         queue_id = self.get_queue_id(entity_id)
         return await self._client.player_queues.get_active_queue(queue_id)
+
+    def _parse_queue_item_id(self, queue_item_id: Any) -> int:
+        """Validate and return queue item ID as integer."""
+        if queue_item_id in (None, ""):
+            msg = "queue_item_id is required"
+            raise ServiceValidationError(msg)
+        try:
+            return int(queue_item_id)
+        except (TypeError, ValueError) as err:
+            msg = "queue_item_id must be an integer"
+            raise ServiceValidationError(msg) from err
 
     def _format_queue_item(self, queue_item: dict) -> dict:
         """Format list of queue items for response."""
@@ -187,7 +200,7 @@ class MassQueueActions:
     async def play_queue_item(self, call: ServiceCall) -> ServiceResponse:
         """Play selected item in queue."""
         entity_id = call.data[ATTR_PLAYER_ENTITY]
-        queue_item_id = call.data[ATTR_QUEUE_ITEM_ID]
+        queue_item_id = self._parse_queue_item_id(call.data.get(ATTR_QUEUE_ITEM_ID))
         queue_id = self.get_queue_id(entity_id)
         await self._client.send_command(
             "player_queues/play_index",
@@ -198,21 +211,21 @@ class MassQueueActions:
     async def remove_queue_item(self, call: ServiceCall) -> ServiceResponse:
         """Remove selected item from queue."""
         entity_id = call.data[ATTR_PLAYER_ENTITY]
-        queue_item_id = call.data[ATTR_QUEUE_ITEM_ID]
+        queue_item_id = self._parse_queue_item_id(call.data.get(ATTR_QUEUE_ITEM_ID))
         queue_id = self.get_queue_id(entity_id)
         await self._client.player_queues.queue_command_delete(queue_id, queue_item_id)
 
     async def move_queue_item_up(self, call: ServiceCall) -> ServiceResponse:
         """Move selected item up in queue."""
         entity_id = call.data[ATTR_PLAYER_ENTITY]
-        queue_item_id = call.data[ATTR_QUEUE_ITEM_ID]
+        queue_item_id = self._parse_queue_item_id(call.data.get(ATTR_QUEUE_ITEM_ID))
         queue_id = self.get_queue_id(entity_id)
         await self._client.player_queues.queue_command_move_up(queue_id, queue_item_id)
 
     async def move_queue_item_down(self, call: ServiceCall) -> ServiceResponse:
         """Move selected item down in queue."""
         entity_id = call.data[ATTR_PLAYER_ENTITY]
-        queue_item_id = call.data[ATTR_QUEUE_ITEM_ID]
+        queue_item_id = self._parse_queue_item_id(call.data.get(ATTR_QUEUE_ITEM_ID))
         queue_id = self.get_queue_id(entity_id)
         await self._client.player_queues.queue_command_move_down(
             queue_id,
@@ -222,7 +235,7 @@ class MassQueueActions:
     async def move_queue_item_next(self, call: ServiceCall) -> ServiceResponse:
         """Move selected item next in queue."""
         entity_id = call.data[ATTR_PLAYER_ENTITY]
-        queue_item_id = call.data[ATTR_QUEUE_ITEM_ID]
+        queue_item_id = self._parse_queue_item_id(call.data.get(ATTR_QUEUE_ITEM_ID))
         queue_id = self.get_queue_id(entity_id)
         await self._client.player_queues.queue_command_move_next(
             queue_id,
@@ -278,4 +291,3 @@ def setup_controller_and_actions(
     actions = MassQueueActions(hass, mass_client)
     actions.setup_controller()
     actions.register_actions()
-    return actions

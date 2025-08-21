@@ -186,6 +186,8 @@ class MassQueueController:
     async def get_queue_index(self, queue_id: str):
         """Get the active queue index for a single queue."""
         active_queue = await self.get_active_queue(queue_id)
+        if active_queue is None or active_queue.current_index is None:
+            return 0
         return active_queue.current_index
 
 
