@@ -201,7 +201,7 @@ class MassQueueActions:
         if limit is None:
             limit = DEFAULT_QUEUE_ITEMS_LIMIT
         offset = max(offset, 0)
-        queue_items = await self._controller.get_queue(
+        queue_items = await self._controller.player_queue(
             queue_id, limit=limit, offset=offset
         )
         response: ServiceResponse = {
