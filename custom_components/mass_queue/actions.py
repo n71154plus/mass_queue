@@ -144,7 +144,7 @@ class MassQueueActions:
         queue_id = self.get_queue_id(entity_id)
         return await self._client.player_queues.get_active_queue(queue_id)
 
-    def _parse_queue_item_id(self, queue_item_id: Any) -> int:
+    def _parse_queue_item_id(self, queue_item_id: Any) -> str:
         """Validate and return queue item ID as integer."""
         if queue_item_id in (None, ""):
             msg = "queue_item_id is required"
