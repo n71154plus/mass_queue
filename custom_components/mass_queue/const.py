@@ -10,6 +10,7 @@ SERVICE_REMOVE_QUEUE_ITEM = "remove_queue_item"
 SERVICE_MOVE_QUEUE_ITEM_UP = "move_queue_item_up"
 SERVICE_MOVE_QUEUE_ITEM_DOWN = "move_queue_item_down"
 SERVICE_MOVE_QUEUE_ITEM_NEXT = "move_queue_item_next"
+SERVICE_REFRESH_QUEUE = "refresh_queue"
 
 ATTR_CONFIG_ENTRY_ID = "config_entry_id"
 

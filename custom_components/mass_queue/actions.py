@@ -36,6 +36,7 @@ from .const import (
     SERVICE_MOVE_QUEUE_ITEM_UP,
     SERVICE_PLAY_QUEUE_ITEM,
     SERVICE_REMOVE_QUEUE_ITEM,
+    SERVICE_REFRESH_QUEUE,
 )
 from .controller import MassQueueController
 from .schemas import (
@@ -45,6 +46,7 @@ from .schemas import (
     PLAY_QUEUE_ITEM_SERVICE_SCHEMA,
     QUEUE_ITEM_SCHEMA,
     QUEUE_ITEMS_SERVICE_SCHEMA,
+    REFRESH_QUEUE_SERVICE_SCHEMA,
     REMOVE_QUEUE_ITEM_SERVICE_SCHEMA,
 )
 
@@ -113,6 +115,14 @@ class MassQueueActions:
             SERVICE_MOVE_QUEUE_ITEM_NEXT,
             self.move_queue_item_next,
             schema=MOVE_QUEUE_ITEM_NEXT_SERVICE_SCHEMA,
+            supports_response=SupportsResponse.NONE,
+        )
+
+        self._hass.services.async_register(
+            DOMAIN,
+            SERVICE_REFRESH_QUEUE,
+            self.refresh_queue,
+            schema=REFRESH_QUEUE_SERVICE_SCHEMA,
             supports_response=SupportsResponse.NONE,
         )
 
@@ -191,11 +201,19 @@ class MassQueueActions:
         if limit is None:
             limit = DEFAULT_QUEUE_ITEMS_LIMIT
         offset = max(offset, 0)
-        queue_items = await self._controller.player_queue(queue_id, limit, offset)
+        queue_items = await self._controller.get_queue(
+            queue_id, limit=limit, offset=offset
+        )
         response: ServiceResponse = {
             entity_id: [self._format_queue_item(item) for item in queue_items],
         }
         return response
+
+    async def refresh_queue(self, call: ServiceCall) -> ServiceResponse:
+        """Force update the cached queue for a player."""
+        entity_id = call.data[ATTR_PLAYER_ENTITY]
+        queue_id = self.get_queue_id(entity_id)
+        await self._controller.update_queue_items(queue_id)
 
     async def play_queue_item(self, call: ServiceCall) -> ServiceResponse:
         """Play selected item in queue."""

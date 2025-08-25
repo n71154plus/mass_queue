@@ -79,3 +79,9 @@ MOVE_QUEUE_ITEM_NEXT_SERVICE_SCHEMA = vol.Schema(
         vol.Required(ATTR_QUEUE_ITEM_ID): str,
     },
 )
+
+REFRESH_QUEUE_SERVICE_SCHEMA = vol.Schema(
+    {
+        vol.Required(ATTR_PLAYER_ENTITY): str,
+    },
+)
